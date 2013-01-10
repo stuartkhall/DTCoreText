@@ -20,6 +20,7 @@
 
 @property (nonatomic, strong) NSMutableDictionary *fontCache;
 @property (nonatomic, strong) NSString *linkGUID;
+@property (nonatomic, assign) BOOL uppercase;
 
 - (DTCSSListStyle *)calculatedListStyle;
 
@@ -493,8 +494,38 @@ NSDictionary *_classesForNames = nil;
 			}
 		}
 	}
+	
+	if (self.uppercase)
+		return [self upperCaseAttributedStringFromAttributedString:tmpString];
 		
 	return tmpString;
+}
+
+- (NSAttributedString *)upperCaseAttributedStringFromAttributedString:(NSAttributedString *)inAttrString {
+	
+    //Make a mutable copy of your input string
+    NSMutableAttributedString *attrString = [inAttrString mutableCopy];
+	
+    //Make a mutable array
+    NSMutableArray *array = [NSMutableArray array];
+	
+    //Add each set of attributes to the array in a dictionary containing the attributes and range
+    [attrString enumerateAttributesInRange:NSMakeRange(0, [attrString length]) options:0 usingBlock:^(NSDictionary *attrs, NSRange range, BOOL *stop) {
+        [array addObject:[NSDictionary dictionaryWithObjectsAndKeys:attrs, @"attrs", [NSValue valueWithRange:range], @"range", nil]];
+    }];
+	
+    //Make a plain uppercase string
+    NSString *string = [[attrString string]uppercaseString];
+	
+    //Replace the characters with the uppercase ones
+    [attrString replaceCharactersInRange:NSMakeRange(0, [attrString length]) withString:string];
+	
+    //Reapply each attribute
+    for (NSDictionary *dict in array) {
+        [attrString setAttributes:[dict objectForKey:@"attrs"] range:[[dict objectForKey:@"range"]rangeValue]];
+    }
+	
+    return attrString;
 }
 
 - (DTHTMLElement *)parentElement
@@ -1057,6 +1088,11 @@ NSDictionary *_classesForNames = nil;
 			
 			self.paragraphStyle.textBlocks = newBlocks;
 		}
+	}
+	
+	NSString *textTransformString = [styles objectForKey:@"text-transform"];
+	if ([textTransformString isEqualToString:@"uppercase"]) {
+		self.uppercase = YES;
 	}
 }
 
