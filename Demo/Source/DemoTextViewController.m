@@ -1,6 +1,6 @@
 //
 //  DemoTextViewController.m
-//  CoreTextExtensions
+//  DTCoreText
 //
 //  Created by Oliver Drobnik on 1/9/11.
 //  Copyright 2011 Drobnik.com. All rights reserved.
@@ -11,6 +11,7 @@
 #import <MediaPlayer/MediaPlayer.h>
 
 #import "DTVersion.h"
+#import "DTTiledLayerWithoutFade.h"
 
 @interface DemoTextViewController ()
 - (void)_segmentedControlChanged:(id)sender;
@@ -108,9 +109,18 @@
 	[self.view addSubview:_htmlView];
 
 	// Create text view
-	[DTAttributedTextContentView setLayerClass:[CATiledLayer class]];
+	[DTAttributedTextContentView setLayerClass:[DTTiledLayerWithoutFade class]];
 	_textView = [[DTAttributedTextView alloc] initWithFrame:frame];
-	_textView.textDelegate = self;
+	
+	// we draw images and links via subviews provided by delegate methods
+	_textView.shouldDrawImages = NO;
+	_textView.shouldDrawLinks = NO;
+	_textView.textDelegate = self; // delegate for custom sub views
+	
+	// set an inset. Since the bottom is below a toolbar inset by 44px
+	[_textView setScrollIndicatorInsets:UIEdgeInsetsMake(0, 0, 44, 0)];
+	_textView.contentInset = UIEdgeInsetsMake(10, 10, 54, 10);
+
 	_textView.autoresizingMask = UIViewAutoresizingFlexibleWidth;
 	[self.view addSubview:_textView];
 	
@@ -156,28 +166,19 @@
 	return string;
 }
 
-
-- (void)viewDidLoad
-{
-	[super viewDidLoad];
-	
-	// Display string
-	_textView.contentView.edgeInsets = UIEdgeInsetsMake(10, 10, 10, 10);
-	_textView.contentView.shouldDrawLinks = NO; // we draw them in DTLinkButton
-	_textView.attributedString = [self _attributedStringForSnippetUsingiOS6Attributes:NO];
-}
-
-
 - (void)viewWillAppear:(BOOL)animated
 {
 	[super viewWillAppear:animated];
 	
 	CGRect bounds = self.view.bounds;
 	_textView.frame = bounds;
+
+	// Display string
+	//_textView.shouldDrawLinks = NO; // we draw them in DTLinkButton
+	_textView.attributedString = [self _attributedStringForSnippetUsingiOS6Attributes:NO];
 	
 	[self _segmentedControlChanged:nil];
-	[_textView setContentInset:UIEdgeInsetsMake(0, 0, 44, 0)];
-	[_textView setScrollIndicatorInsets:UIEdgeInsetsMake(0, 0, 44, 0)];
+	
 	[self.navigationController setToolbarHidden:NO animated:YES];
 }
 
@@ -459,7 +460,7 @@
 
 - (BOOL)attributedTextContentView:(DTAttributedTextContentView *)attributedTextContentView shouldDrawBackgroundForTextBlock:(DTTextBlock *)textBlock frame:(CGRect)frame context:(CGContextRef)context forLayoutFrame:(DTCoreTextLayoutFrame *)layoutFrame
 {
-	UIBezierPath *roundedRect = [UIBezierPath bezierPathWithRoundedRect:frame cornerRadius:10];
+	UIBezierPath *roundedRect = [UIBezierPath bezierPathWithRoundedRect:CGRectInset(frame,1,1) cornerRadius:10];
 
 	CGColorRef color = [textBlock.backgroundColor CGColor];
 	if (color)
@@ -530,9 +531,8 @@
 
 - (void)debugButton:(UIBarButtonItem *)sender
 {
-	_textView.contentView.drawDebugFrames = !_textView.contentView.drawDebugFrames;
-	[DTCoreTextLayoutFrame setShouldDrawDebugFrames:_textView.contentView.drawDebugFrames];
-	[self.view setNeedsDisplay];
+	[DTCoreTextLayoutFrame setShouldDrawDebugFrames:![DTCoreTextLayoutFrame shouldDrawDebugFrames]];
+	[_textView.attributedTextContentView setNeedsDisplay];
 }
 
 #pragma mark DTLazyImageViewDelegate
@@ -544,7 +544,7 @@
 	NSPredicate *pred = [NSPredicate predicateWithFormat:@"contentURL == %@", url];
 	
 	// update all attachments that matchin this URL (possibly multiple images with same size)
-	for (DTTextAttachment *oneAttachment in [_textView.contentView.layoutFrame textAttachmentsWithPredicate:pred])
+	for (DTTextAttachment *oneAttachment in [_textView.attributedTextContentView.layoutFrame textAttachmentsWithPredicate:pred])
 	{
 		oneAttachment.originalSize = imageSize;
 		
@@ -554,9 +554,11 @@
 		}
 	}
 	
-	// redo layout
+	// need to reset the layouter because otherwise we get the old framesetter or cached layout frames
+	_textView.attributedTextContentView.layouter=nil;
+	
 	// here we're layouting the entire string, might be more efficient to only relayout the paragraphs that contain these attachments
-	[_textView.contentView relayoutText];
+	[_textView.attributedTextContentView relayoutText];
 }
 
 #pragma mark Properties

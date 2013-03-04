@@ -1,6 +1,6 @@
 //
 //  DTCoreTextGlyphRun.m
-//  CoreTextExtensions
+//  DTCoreText
 //
 //  Created by Oliver Drobnik on 1/25/11.
 //  Copyright 2011 Drobnik.com. All rights reserved.
@@ -23,7 +23,12 @@
 @property (nonatomic, assign) CGRect frame;
 @property (nonatomic, assign) NSInteger numberOfGlyphs;
 @property (nonatomic, unsafe_unretained, readwrite) NSDictionary *attributes;
-@property (nonatomic, assign) dispatch_semaphore_t runLock;
+
+#if OS_OBJECT_USE_OBJC
+@property (nonatomic, strong) dispatch_semaphore_t runLock; // GCD objects use ARC
+#else
+@property (nonatomic, assign) dispatch_semaphore_t runLock; // GCD objects don't use ARC
+#endif
 
 @end
 
@@ -41,6 +46,7 @@
 	CGFloat _width;
 	
 	BOOL _writingDirectionIsRightToLeft;
+	BOOL _isTrailingWhitespace;
 	
 	NSInteger _numberOfGlyphs;
 	
@@ -58,6 +64,7 @@
 	BOOL _didCheckForHyperlinkInAttributes;
 	BOOL _didCalculateMetrics;
 	BOOL _didGetWritingDirection;
+	BOOL _didDetermineTrailingWhitespace;
 }
 
 @synthesize runLock;
@@ -86,7 +93,9 @@
 		CFRelease(_run);
 	}
 	
+#if !OS_OBJECT_USE_OBJC
 	dispatch_release(runLock);
+#endif
 }
 
 - (NSString *)description
@@ -215,6 +224,31 @@
 		_descent = 0;
 		_ascent = self.attachment.displaySize.height;
 	}
+}
+
+- (BOOL)isTrailingWhitespace
+{
+	if (_didDetermineTrailingWhitespace)
+	{
+		return _isTrailingWhitespace;
+	}
+	
+	if (self == [[_line glyphRuns] lastObject])
+	{
+		if (!_didCalculateMetrics)
+		{
+			[self calculateMetrics];
+		}
+
+		// this is trailing whitespace if it matches the lines's trailing whitespace
+		if (_line.trailingWhitespaceWidth >= _width)
+		{
+			_isTrailingWhitespace = YES;
+		}
+	}
+	
+	_didDetermineTrailingWhitespace = YES;
+	return _isTrailingWhitespace;
 }
 
 #pragma mark Properites

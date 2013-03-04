@@ -13,6 +13,7 @@ NSString * const NSAttachmentAttributeName = @"NSAttachmentAttributeName";
 
 NSString * const DTMaxImageSize = @"DTMaxImageSize";
 NSString * const DTDefaultFontFamily = @"DTDefaultFontFamily";
+NSString * const DTDefaultFontSize = @"DTDefaultFontSize";
 NSString * const DTDefaultTextColor = @"DTDefaultTextColor";
 NSString * const DTDefaultLinkColor = @"DTDefaultLinkColor";
 NSString * const DTDefaultLinkDecoration = @"DTDefaultLinkDecoration";
@@ -29,7 +30,7 @@ NSString * const DTWillFlushBlockCallBack = @"DTWillFlushBlockCallBack";
 
 NSString * const DTTextListsAttribute = @"DTTextLists";
 NSString * const DTAttachmentParagraphSpacingAttribute = @"DTAttachmentParagraphSpacing";
-NSString * const DTLinkAttribute = @"DTLink";
+NSString * const DTLinkAttribute = @"NSLinkAttributeName";
 NSString * const DTAnchorAttribute = @"DTAnchor";
 NSString * const DTGUIDAttribute = @"DTGUID";
 NSString * const DTHeaderLevelAttribute = @"DTHeaderLevel";

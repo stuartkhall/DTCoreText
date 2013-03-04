@@ -1,6 +1,6 @@
 //
 //  DTCoreTextLayoutFrame.h
-//  CoreTextExtensions
+//  DTCoreText
 //
 //  Created by Oliver Drobnik on 1/24/11.
 //  Copyright 2011 Drobnik.com. All rights reserved.
@@ -107,15 +107,14 @@ typedef void (^DTCoreTextLayoutFrameTextBlockHandler)(DTTextBlock *textBlock, CG
  
  @param context A graphics context to draw into
  @param drawImages Whether images should be drawn together with the text. If you specify `NO` then space is left blank where images would go and you have to add your own views to display these images.
+ @param drawLinks Whether hyperlinks should be drawn together with the text. If you specify `NO` then space is left blank where links would go and you have to add your own views to display these images.
  @param drawImages Whether hyperlinks should be drawn together with the text. If you specify `NO` then space is left blank where links would go and you have to add your own views to display these links.
  */
 - (void)drawInContext:(CGContextRef)context drawImages:(BOOL)drawImages drawLinks:(BOOL)drawLinks;
 
 
 /**
- Set a custom handler to be executed before text belonging to a text block is drawn.
- 
- @param handler A DTCoreTextLayoutFrameTextBlockHandler block.
+ Set a custom handler to be executed before text belonging to a text block is drawn. Of type <DTCoreTextLayoutFrameTextBlockHandler>.
 */
 @property (nonatomic, copy) DTCoreTextLayoutFrameTextBlockHandler textBlockHandler;
 
@@ -281,5 +280,39 @@ typedef void (^DTCoreTextLayoutFrameTextBlockHandler)(DTTextBlock *textBlock, CG
  @param debugFrames if the debug drawing should occur
  */
 + (void)setShouldDrawDebugFrames:(BOOL)debugFrames;
+
+
+/**
+ @returns the current value of the debug frame drawing
+ */
++ (BOOL)shouldDrawDebugFrames;
+
+/**
+ @name Truncation
+ */
+
+
+/**
+ Maximum number of lines to display before truncation.  Default is 0 which indicates no limit.
+ */
+@property(nonatomic, assign) NSInteger numberOfLines;
+
+
+/**
+ Line break mode used to indicate how truncation should occur
+ */
+@property(nonatomic, assign) NSLineBreakMode lineBreakMode;
+
+
+/**
+ Optional attributed string tu use as truncation indicator.  If nil, will use "…" w/ attributes taken from text being truncated
+ */
+@property(nonatomic, strong)NSAttributedString *truncationString;
+
+
+/**
+ Flag to supress leading whitespace above fist line
+ */
+@property(nonatomic, assign)BOOL noLeadingOnFirstLine;
 
 @end
